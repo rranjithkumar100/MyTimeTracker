@@ -1,0 +1,53 @@
+CREATE TABLE RoutineLog (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    duration INTEGER NOT NULL
+);
+
+CREATE TABLE SleepLog (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    sleepTime INTEGER NOT NULL,
+    wakeTime INTEGER NOT NULL,
+    duration INTEGER NOT NULL
+);
+
+CREATE TABLE ExerciseLog (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    activityType TEXT NOT NULL,
+    duration INTEGER NOT NULL
+);
+
+CREATE TABLE DailyScore (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    officeWorkScore INTEGER NOT NULL,
+    personalProjectScore INTEGER NOT NULL
+);
+
+-- RoutineLog queries
+insertRoutineLog:
+INSERT INTO RoutineLog(timestamp, duration) VALUES (?, ?);
+
+getRoutineLogs:
+SELECT * FROM RoutineLog;
+
+-- SleepLog queries
+insertSleepLog:
+INSERT INTO SleepLog(sleepTime, wakeTime, duration) VALUES (?, ?, ?);
+
+getSleepLogs:
+SELECT * FROM SleepLog;
+
+-- ExerciseLog queries
+insertExerciseLog:
+INSERT INTO ExerciseLog(activityType, duration) VALUES (?, ?);
+
+getExerciseLogs:
+SELECT * FROM ExerciseLog;
+
+-- DailyScore queries
+insertDailyScore:
+INSERT INTO DailyScore(date, officeWorkScore, personalProjectScore) VALUES (?, ?, ?);
+
+getDailyScores:
+SELECT * FROM DailyScore;
