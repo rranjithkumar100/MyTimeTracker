@@ -1,14 +1,14 @@
 package ai.screens
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+// import androidx.compose.material3.DatePicker
+// import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
+// import androidx.compose.material3.TimePicker
+// import androidx.compose.material3.rememberDatePickerState
+// import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -22,13 +22,14 @@ fun DatePickerModal(
     onDateSelected: (Long?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val datePickerState = rememberDatePickerState()
-
-    DatePickerDialog(
+    // Placeholder for compatibility testing
+    AlertDialog(
         onDismissRequest = onDismiss,
+        title = { Text("Date Picker") },
+        text = { Text("Date Picker is temporarily disabled for compatibility check.") },
         confirmButton = {
             TextButton(onClick = {
-                onDateSelected(datePickerState.selectedDateMillis)
+                onDateSelected(null) // Or current date
                 onDismiss()
             }) {
                 Text("OK")
@@ -39,9 +40,7 @@ fun DatePickerModal(
                 Text("Cancel")
             }
         }
-    ) {
-        DatePicker(state = datePickerState)
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,17 +51,14 @@ fun TimePickerModal(
     onTimeSelected: (Int, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val state = rememberTimePickerState(
-        initialHour = initialHour,
-        initialMinute = initialMinute,
-        is24Hour = false
-    )
-
+    // Placeholder for compatibility testing
     AlertDialog(
         onDismissRequest = onDismiss,
+        title = { Text("Time Picker") },
+        text = { Text("Time Picker is temporarily disabled for compatibility check.") },
         confirmButton = {
             TextButton(onClick = {
-                onTimeSelected(state.hour, state.minute)
+                onTimeSelected(initialHour, initialMinute)
                 onDismiss()
             }) {
                 Text("OK")
@@ -72,9 +68,6 @@ fun TimePickerModal(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        },
-        text = {
-            TimePicker(state = state)
         }
     )
 }
