@@ -1,11 +1,16 @@
 package ai.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -31,30 +35,74 @@ fun SleepInputDialog(
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(getCurrentDateString()) }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showSleepTimePicker by remember { mutableStateOf(false) }
+    var showWakeTimePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerModal(
+            onDateSelected = { millis ->
+                if (millis != null) {
+                    date = convertMillisToDate(millis)
+                }
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
+
+    if (showSleepTimePicker) {
+        TimePickerModal(
+            initialHour = parseTime(sleepTimeText)?.first ?: 22,
+            initialMinute = parseTime(sleepTimeText)?.second ?: 30,
+            onTimeSelected = { h, m ->
+                sleepTimeText = formatTime(h, m)
+                showSleepTimePicker = false
+            },
+            onDismiss = { showSleepTimePicker = false }
+        )
+    }
+
+    if (showWakeTimePicker) {
+        TimePickerModal(
+            initialHour = parseTime(wakeTimeText)?.first ?: 7,
+            initialMinute = parseTime(wakeTimeText)?.second ?: 0,
+            onTimeSelected = { h, m ->
+                wakeTimeText = formatTime(h, m)
+                showWakeTimePicker = false
+            },
+            onDismiss = { showWakeTimePicker = false }
+        )
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Log Sleep") },
         text = {
             Column {
-                OutlinedTextField(
+                ClickableTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date (YYYY-MM-DD)") }
+                    label = "Date",
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
                 )
-                OutlinedTextField(
+                ClickableTextField(
                     value = sleepTimeText,
-                    onValueChange = { sleepTimeText = it },
-                    label = { Text("Sleep Time (HH:MM)") }
+                    label = "Sleep Time",
+                    icon = Icons.Default.Schedule,
+                    onClick = { showSleepTimePicker = true }
                 )
-                OutlinedTextField(
+                ClickableTextField(
                     value = wakeTimeText,
-                    onValueChange = { wakeTimeText = it },
-                    label = { Text("Wake Time (HH:MM)") }
+                    label = "Wake Time",
+                    icon = Icons.Default.Schedule,
+                    onClick = { showWakeTimePicker = true }
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description (Optional)") }
+                    label = { Text("Description (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -86,32 +134,49 @@ fun ExerciseInputDialog(
     var durationText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(getCurrentDateString()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerModal(
+            onDateSelected = { millis ->
+                if (millis != null) {
+                    date = convertMillisToDate(millis)
+                }
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Log Exercise") },
         text = {
             Column {
-                OutlinedTextField(
+                ClickableTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date (YYYY-MM-DD)") }
+                    label = "Date",
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
                 )
                 OutlinedTextField(
                     value = activityType,
                     onValueChange = { activityType = it },
-                    label = { Text("Activity Type") }
+                    label = { Text("Activity Type") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = durationText,
                     onValueChange = { durationText = it },
                     label = { Text("Duration (minutes)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description (Optional)") }
+                    label = { Text("Description (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -142,33 +207,50 @@ fun DailyScoreInputDialog(
     var personalScoreText by remember { mutableStateOf("") }
     var reflection by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(getCurrentDateString()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerModal(
+            onDateSelected = { millis ->
+                if (millis != null) {
+                    date = convertMillisToDate(millis)
+                }
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Daily Score") },
         text = {
             Column {
-                OutlinedTextField(
+                ClickableTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date (YYYY-MM-DD)") }
+                    label = "Date",
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
                 )
                 OutlinedTextField(
                     value = officeScoreText,
                     onValueChange = { officeScoreText = it },
                     label = { Text("Office Score (1-10)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = personalScoreText,
                     onValueChange = { personalScoreText = it },
                     label = { Text("Personal Score (1-10)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = reflection,
                     onValueChange = { reflection = it },
-                    label = { Text("Reflection (Optional)") }
+                    label = { Text("Reflection (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -200,33 +282,49 @@ fun RoutineInputDialog(
     var durationText by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(getCurrentDateString()) }
-    // Simplified: Manual entry for now, timer logic can be added later or user inputs duration
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        DatePickerModal(
+            onDateSelected = { millis ->
+                if (millis != null) {
+                    date = convertMillisToDate(millis)
+                }
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Log Routine") },
         text = {
             Column {
-                OutlinedTextField(
+                ClickableTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date (YYYY-MM-DD)") }
+                    label = "Date",
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
                 )
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Routine Title") }
+                    label = { Text("Routine Title") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = durationText,
                     onValueChange = { durationText = it },
                     label = { Text("Duration (minutes)") },
-                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes (Optional)") }
+                    label = { Text("Notes (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -234,7 +332,6 @@ fun RoutineInputDialog(
             Button(onClick = {
                 val duration = durationText.toLongOrNull()?.times(60000) // Convert to millis
                 if (title.isNotBlank() && duration != null) {
-                    // Start time: just use current time for now or add input
                     val startTime = Clock.System.now().toEpochMilliseconds() - duration
                     onSave(title, startTime, duration, notes, date)
                 }
@@ -250,6 +347,29 @@ fun RoutineInputDialog(
     )
 }
 
+@Composable
+fun ClickableTextField(
+    value: String,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+     Box {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            trailingIcon = { Icon(icon, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(onClick = onClick)
+        )
+    }
+}
 
 fun getCurrentDateString(): String {
     val currentMoment = Clock.System.now()
