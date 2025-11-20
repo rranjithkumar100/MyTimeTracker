@@ -1,53 +1,77 @@
 CREATE TABLE RoutineLog (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    timestamp INTEGER NOT NULL,
-    duration INTEGER NOT NULL
+    title TEXT NOT NULL,
+    startTime INTEGER NOT NULL,
+    duration INTEGER NOT NULL,
+    notes TEXT,
+    display_date TEXT NOT NULL,
+    log_type TEXT NOT NULL
 );
 
 CREATE TABLE SleepLog (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     sleepTime INTEGER NOT NULL,
     wakeTime INTEGER NOT NULL,
-    duration INTEGER NOT NULL
+    duration INTEGER NOT NULL,
+    description TEXT,
+    display_date TEXT NOT NULL,
+    log_type TEXT NOT NULL
 );
 
 CREATE TABLE ExerciseLog (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     activityType TEXT NOT NULL,
-    duration INTEGER NOT NULL
+    duration INTEGER NOT NULL,
+    description TEXT,
+    display_date TEXT NOT NULL,
+    log_type TEXT NOT NULL
 );
 
 CREATE TABLE DailyScore (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
     officeWorkScore INTEGER NOT NULL,
-    personalProjectScore INTEGER NOT NULL
+    personalProjectScore INTEGER NOT NULL,
+    reflection TEXT,
+    display_date TEXT NOT NULL,
+    log_type TEXT NOT NULL
 );
 
 -- RoutineLog queries
 insertRoutineLog:
-INSERT INTO RoutineLog(timestamp, duration) VALUES (?, ?);
+INSERT INTO RoutineLog(title, startTime, duration, notes, display_date, log_type) VALUES (?, ?, ?, ?, ?, ?);
 
 getRoutineLogs:
 SELECT * FROM RoutineLog;
 
+deleteRoutineLog:
+DELETE FROM RoutineLog WHERE id = ?;
+
 -- SleepLog queries
 insertSleepLog:
-INSERT INTO SleepLog(sleepTime, wakeTime, duration) VALUES (?, ?, ?);
+INSERT INTO SleepLog(sleepTime, wakeTime, duration, description, display_date, log_type) VALUES (?, ?, ?, ?, ?, ?);
 
 getSleepLogs:
 SELECT * FROM SleepLog;
 
+deleteSleepLog:
+DELETE FROM SleepLog WHERE id = ?;
+
 -- ExerciseLog queries
 insertExerciseLog:
-INSERT INTO ExerciseLog(activityType, duration) VALUES (?, ?);
+INSERT INTO ExerciseLog(activityType, duration, description, display_date, log_type) VALUES (?, ?, ?, ?, ?);
 
 getExerciseLogs:
 SELECT * FROM ExerciseLog;
 
+deleteExerciseLog:
+DELETE FROM ExerciseLog WHERE id = ?;
+
 -- DailyScore queries
 insertDailyScore:
-INSERT INTO DailyScore(date, officeWorkScore, personalProjectScore) VALUES (?, ?, ?);
+INSERT INTO DailyScore(officeWorkScore, personalProjectScore, reflection, display_date, log_type) VALUES (?, ?, ?, ?, ?);
 
 getDailyScores:
 SELECT * FROM DailyScore;
+
+deleteDailyScore:
+DELETE FROM DailyScore WHERE id = ?;

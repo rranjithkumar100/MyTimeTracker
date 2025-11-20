@@ -1,111 +1,98 @@
 package ai
 
+import ai.data.LogEntry
 import ai.data.Repository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant as KxInstant
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.todayIn
-import kotlin.time.ExperimentalTime
-import kotlin.time.Clock as KtClock
 
 class MainViewModel(private val repository: Repository) : ViewModel() {
 
-    // Stopwatch
-    private val _formattedTime = MutableStateFlow("00:00:00")
-    val formattedTime: StateFlow<String> = _formattedTime
+    private val _logs = MutableStateFlow<List<LogEntry>>(emptyList())
+    val logs: StateFlow<List<LogEntry>> = _logs
 
-    private var stopwatchJob: Job? = null
-    private var elapsedTime = 0L
+    init {
+        refreshLogs()
+    }
 
-    @OptIn(ExperimentalTime::class)
-    fun onStartClick() {
-        if (stopwatchJob?.isActive == true) return
-        stopwatchJob = viewModelScope.launch {
-            // get epoch millis from kotlin.time.Clock.System
-            val startTime = KtClock.System.now().toEpochMilliseconds() - elapsedTime
-            while (true) {
-                elapsedTime = KtClock.System.now().toEpochMilliseconds() - startTime
-                _formattedTime.value = formatTime(elapsedTime)
-                delay(1000)
+    fun refreshLogs() {
+        viewModelScope.launch {
+            val routineLogs = repository.getRoutineLogs().map {
+                LogEntry.Routine(it.id, it.title, it.startTime, it.duration, it.notes, it.display_date)
             }
+            val sleepLogs = repository.getSleepLogs().map {
+                LogEntry.Sleep(it.id, it.sleepTime, it.wakeTime, it.duration, it.description, it.display_date)
+            }
+            val exerciseLogs = repository.getExerciseLogs().map {
+                LogEntry.Exercise(it.id, it.activityType, it.duration, it.description, it.display_date)
+            }
+            val dailyScores = repository.getDailyScores().map {
+                LogEntry.DailyScore(it.id, it.officeWorkScore, it.personalProjectScore, it.reflection, it.display_date)
+            }
+
+            val allLogs = (routineLogs + sleepLogs + exerciseLogs + dailyScores).sortedByDescending {
+                // Sorting by display_date descending, then maybe by id or another field
+                // Assuming display_date is YYYY-MM-DD or similar comparable string
+                it.displayDate
+            }
+            _logs.value = allLogs
         }
     }
 
-    fun onPauseClick() {
-        stopwatchJob?.cancel()
-    }
-
-    fun onResetClick() {
-        stopwatchJob?.cancel()
-        repository.insertRoutineLog(elapsedTime)
-        elapsedTime = 0L
-        _formattedTime.value = formatTime(elapsedTime)
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun formatTime(timeInMillis: Long): String {
-        // Use kotlinx.datetime.Instant to convert epoch millis -> local time components
-        val instant = KxInstant.fromEpochMilliseconds(timeInMillis)
-        val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
-        val hours = localDateTime.hour.toString().padStart(2, '0')
-        val minutes = localDateTime.minute.toString().padStart(2, '0')
-        val seconds = localDateTime.second.toString().padStart(2, '0')
-        return "$hours:$minutes:$seconds"
-    }
-
-    // Sleep Log
-    fun saveSleepLog(sleepTime: String, wakeTime: String) {
-        val sleepTimeMillis = parseTime(sleepTime)
-        val wakeTimeMillis = parseTime(wakeTime)
-
-        if (sleepTimeMillis != null && wakeTimeMillis != null) {
-            val duration = wakeTimeMillis - sleepTimeMillis
-            repository.insertSleepLog(sleepTimeMillis, wakeTimeMillis, duration)
+    fun addRoutineLog(title: String, startTime: Long, duration: Long, notes: String?, displayDate: String) {
+        viewModelScope.launch {
+            repository.insertRoutineLog(title, startTime, duration, notes, displayDate)
+            refreshLogs()
         }
     }
 
-    // Exercise Log
-    fun saveExerciseLog(activityType: String, duration: String) {
-        val durationMinutes = duration.toLongOrNull()
-        if (durationMinutes != null) {
-            repository.insertExerciseLog(activityType, durationMinutes)
+    fun addSleepLog(sleepTime: Long, wakeTime: Long, description: String?, displayDate: String) {
+        viewModelScope.launch {
+            val duration = wakeTime - sleepTime // Simple duration calculation
+            repository.insertSleepLog(sleepTime, wakeTime, duration, description, displayDate)
+            refreshLogs()
         }
     }
 
-    // Daily Score
-    @OptIn(ExperimentalTime::class)
-    fun saveDailyScore(officeWorkScore: String, personalProjectScore: String) {
-        val officeScore = officeWorkScore.toLongOrNull()
-        val personalScore = personalProjectScore.toLongOrNull()
-
-        val currentDate = KxInstant.fromEpochMilliseconds(
-            KtClock.System.now().toEpochMilliseconds()
-        )
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-
-        if (officeScore != null && personalScore != null) {
-            repository.insertDailyScore(currentDate.toString(), officeScore, personalScore)
+    fun addExerciseLog(activityType: String, duration: Long, description: String?, displayDate: String) {
+        viewModelScope.launch {
+            repository.insertExerciseLog(activityType, duration, description, displayDate)
+            refreshLogs()
         }
     }
 
-
-    private fun parseTime(time: String): Long? {
-        return try {
-            val parts = time.split(":")
-            val hours = parts[0].toLong()
-            val minutes = parts[1].toLong()
-            (hours * 60 + minutes) * 60 * 1000
-        } catch (e: Exception) {
-            null
+    fun addDailyScore(officeWorkScore: Long, personalProjectScore: Long, reflection: String?, displayDate: String) {
+        viewModelScope.launch {
+            repository.insertDailyScore(officeWorkScore, personalProjectScore, reflection, displayDate)
+            refreshLogs()
         }
+    }
+
+    fun deleteLog(logEntry: LogEntry) {
+        viewModelScope.launch {
+            when (logEntry) {
+                is LogEntry.Routine -> repository.deleteRoutineLog(logEntry.id)
+                is LogEntry.Sleep -> repository.deleteSleepLog(logEntry.id)
+                is LogEntry.Exercise -> repository.deleteExerciseLog(logEntry.id)
+                is LogEntry.DailyScore -> repository.deleteDailyScore(logEntry.id)
+            }
+            refreshLogs()
+        }
+    }
+
+    fun getFormattedDate(): String {
+        val currentMoment = Clock.System.now()
+        val datetime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+        // Simple formatting: YYYY-MM-DD. Or use a library if available.
+        // Since I don't have a formatter handy in KMP common without additional libs, I'll construct it.
+        // But wait, toLocalDateTime gives structure.
+        val month = datetime.monthNumber.toString().padStart(2, '0')
+        val day = datetime.dayOfMonth.toString().padStart(2, '0')
+        return "${datetime.year}-$month-$day"
     }
 }
