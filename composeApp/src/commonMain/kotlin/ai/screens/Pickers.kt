@@ -15,6 +15,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,12 +73,14 @@ fun TimePickerModal(
     )
 }
 
+@OptIn(ExperimentalTime::class)
 fun convertMillisToDate(millis: Long): String {
     val instant = Instant.fromEpochMilliseconds(millis)
     val date = instant.toLocalDateTime(TimeZone.UTC).date
     return date.toString() // YYYY-MM-DD
 }
 
+@OptIn(ExperimentalTime::class)
 fun convertDateToMillis(dateStr: String): Long? {
     return try {
         val date = LocalDate.parse(dateStr)

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun SleepInputDialog(
@@ -273,6 +274,7 @@ fun DailyScoreInputDialog(
     )
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun RoutineInputDialog(
     onDismiss: () -> Unit,
@@ -332,7 +334,7 @@ fun RoutineInputDialog(
             Button(onClick = {
                 val duration = durationText.toLongOrNull()?.times(60000) // Convert to millis
                 if (title.isNotBlank() && duration != null) {
-                    val startTime = Clock.System.now().toEpochMilliseconds() - duration
+                    val startTime = kotlin.time.Clock.System.now().toEpochMilliseconds() - duration
                     onSave(title, startTime, duration, notes, date)
                 }
             }) {
@@ -371,8 +373,10 @@ fun ClickableTextField(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 fun getCurrentDateString(): String {
-    val currentMoment = Clock.System.now()
+
+    val currentMoment =kotlin.time.Clock.System.now()
     val datetime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
     val month = datetime.monthNumber.toString().padStart(2, '0')
     val day = datetime.dayOfMonth.toString().padStart(2, '0')
