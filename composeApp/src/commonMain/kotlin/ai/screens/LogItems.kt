@@ -36,7 +36,8 @@ fun LogItem(log: LogEntry, onDelete: () -> Unit, onEdit: () -> Unit) {
             .padding(vertical = 4.dp)
             .clickable { onEdit() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = getCardBackgroundColor(log))
     ) {
         Row(
             modifier = Modifier
@@ -132,10 +133,28 @@ fun LogContent(log: LogEntry) {
 
 fun getScoreColor(score: Long): Color {
     return when {
-        score > 7 -> Color.Green
-        score >= 4 -> Color.Yellow
-        else -> Color.Red
+        score > 7 -> Color(0xFF2E7D32) // Darker Green
+        score >= 5 -> Color(0xFFF9A825) // Darker Yellow
+        else -> Color(0xFFC62828) // Darker Red
     }
+}
+
+@Composable
+fun getCardBackgroundColor(log: LogEntry): Color {
+    if (log is LogEntry.DailyScore) {
+        val scoreToCheck = if (log.officeWorkScore > 0) {
+            (log.officeWorkScore + log.personalProjectScore) / 2.0
+        } else {
+            log.personalProjectScore.toDouble()
+        }
+
+        return when {
+            scoreToCheck > 7 -> Color(0xFFE8F5E9) // Light Green
+            scoreToCheck >= 5 -> Color(0xFFFFFDE7) // Light Yellow
+            else -> Color(0xFFFFEBEE) // Light Red
+        }
+    }
+    return MaterialTheme.colorScheme.surfaceVariant
 }
 
 fun formatDuration(millis: Long): String {

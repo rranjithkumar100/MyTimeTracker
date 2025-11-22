@@ -71,7 +71,10 @@ class MainViewModel(private val repository: Repository) : ViewModel() {
 
     fun addSleepLog(sleepTime: Long, wakeTime: Long, description: String?, displayDate: String) {
         viewModelScope.launch {
-            val duration = wakeTime - sleepTime // Simple duration calculation
+            var duration = wakeTime - sleepTime
+            if (duration < 0) {
+                duration += 24 * 60 * 60 * 1000 // Add 24 hours in millis
+            }
             repository.insertSleepLog(sleepTime, wakeTime, duration, description, displayDate)
             refreshLogs()
         }
