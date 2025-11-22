@@ -62,4 +62,12 @@ class Repository(private val database: AppDatabase) {
     fun deleteSleepLog(id: Long) = database.appDatabaseQueries.deleteSleepLog(id)
     fun deleteExerciseLog(id: Long) = database.appDatabaseQueries.deleteExerciseLog(id)
     fun deleteDailyScore(id: Long) = database.appDatabaseQueries.deleteDailyScore(id)
+
+    fun saveSetting(key: String, value: String) {
+        database.appDatabaseQueries.insertOrReplaceSetting(key, value)
+    }
+
+    fun getSetting(key: String): String? {
+        return database.appDatabaseQueries.getSetting(key).executeAsOneOrNull()
+    }
 }

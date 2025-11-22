@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -105,11 +106,35 @@ fun LogContent(log: LogEntry) {
         }
         is LogEntry.DailyScore -> {
             Text(text = "Scores", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Office: ${log.officeWorkScore}/10, Personal: ${log.personalProjectScore}/10", style = MaterialTheme.typography.bodyMedium)
+            Row {
+                if (log.officeWorkScore > 0) {
+                    Text(text = "Office: ", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "${log.officeWorkScore}/10",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = getScoreColor(log.officeWorkScore)
+                    )
+                    Text(text = ", ", style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(text = "Personal: ", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "${log.personalProjectScore}/10",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = getScoreColor(log.personalProjectScore)
+                )
+            }
             if (!log.reflection.isNullOrBlank()) {
                 Text(text = log.reflection, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+    }
+}
+
+fun getScoreColor(score: Long): Color {
+    return when {
+        score > 7 -> Color.Green
+        score >= 4 -> Color.Yellow
+        else -> Color.Red
     }
 }
 

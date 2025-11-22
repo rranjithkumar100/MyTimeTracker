@@ -24,6 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import ai.data.WeekendMode
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DayOfWeek
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -201,6 +204,7 @@ fun ExerciseInputDialog(
 
 @Composable
 fun DailyScoreInputDialog(
+    weekendMode: WeekendMode,
     onDismiss: () -> Unit,
     onSave: (officeScore: Long, personalScore: Long, reflection: String?, date: String) -> Unit
 ) {
@@ -209,6 +213,19 @@ fun DailyScoreInputDialog(
     var reflection by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(getCurrentDateString()) }
     var showDatePicker by remember { mutableStateOf(false) }
+
+    val isWeekend = remember(date, weekendMode) {
+        try {
+            val localDate = LocalDate.parse(date)
+            val dayOfWeek = localDate.dayOfWeek
+            when (weekendMode) {
+                WeekendMode.FriSat -> dayOfWeek == DayOfWeek.FRIDAY || dayOfWeek == DayOfWeek.SATURDAY
+                WeekendMode.SatSun -> dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     if (showDatePicker) {
         DatePickerModal(
@@ -233,13 +250,15 @@ fun DailyScoreInputDialog(
                     icon = Icons.Default.DateRange,
                     onClick = { showDatePicker = true }
                 )
-                OutlinedTextField(
-                    value = officeScoreText,
-                    onValueChange = { officeScoreText = it },
-                    label = { Text("Office Score (1-10)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (!isWeekend) {
+                    OutlinedTextField(
+                        value = officeScoreText,
+                        onValueChange = { officeScoreText = it },
+                        label = { Text("Office Score (1-10)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 OutlinedTextField(
                     value = personalScoreText,
                     onValueChange = { personalScoreText = it },
@@ -257,7 +276,7 @@ fun DailyScoreInputDialog(
         },
         confirmButton = {
             Button(onClick = {
-                val office = officeScoreText.toLongOrNull()
+                val office = if (isWeekend) 0L else officeScoreText.toLongOrNull()
                 val personal = personalScoreText.toLongOrNull()
                 if (office != null && personal != null) {
                     onSave(office, personal, reflection, date)
