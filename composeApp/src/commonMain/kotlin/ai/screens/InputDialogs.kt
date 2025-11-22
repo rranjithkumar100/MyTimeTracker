@@ -394,14 +394,13 @@ fun ClickableTextField(
 
 @OptIn(ExperimentalTime::class)
 fun getCurrentDateString(): String {
-
-    val currentMoment =kotlin.time.Clock.System.now()
-    val datetime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+    val epochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+    val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(epochMillis)
+    val datetime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
     val month = datetime.monthNumber.toString().padStart(2, '0')
     val day = datetime.dayOfMonth.toString().padStart(2, '0')
     return "${datetime.year}-$month-$day"
 }
-
 fun parseTimeInput(time: String): Long? {
     // Input format HH:MM. Returns millis from start of day (or just millis representation)
     return try {
