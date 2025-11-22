@@ -1,15 +1,13 @@
 package ai.screens
 
-import androidx.compose.material3.AlertDialog
-// import androidx.compose.material3.DatePicker
-// import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-// import androidx.compose.material3.TimePicker
-// import androidx.compose.material3.rememberDatePickerState
-// import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -23,16 +21,17 @@ fun DatePickerModal(
     onDateSelected: (Long?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Placeholder for compatibility testing
-    AlertDialog(
+    val datePickerState = rememberDatePickerState()
+
+    DatePickerDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Date Picker") },
-        text = { Text("Date Picker is temporarily disabled for compatibility check.") },
         confirmButton = {
-            TextButton(onClick = {
-                onDateSelected(null) // Or current date
-                onDismiss()
-            }) {
+            TextButton(
+                onClick = {
+                    onDateSelected(datePickerState.selectedDateMillis)
+                    onDismiss()
+                }
+            ) {
                 Text("OK")
             }
         },
@@ -41,7 +40,9 @@ fun DatePickerModal(
                 Text("Cancel")
             }
         }
-    )
+    ) {
+        DatePicker(state = datePickerState)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,27 +53,64 @@ fun TimePickerModal(
     onTimeSelected: (Int, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Placeholder for compatibility testing
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Time Picker") },
-        text = { Text("Time Picker is temporarily disabled for compatibility check.") },
-        confirmButton = {
-            TextButton(onClick = {
-                onTimeSelected(initialHour, initialMinute)
-                onDismiss()
-            }) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Select Time",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+
+                TimePicker(
+                    state = timePickerState,
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            onTimeSelected(
+                                timePickerState.hour,
+                                timePickerState.minute
+                            )
+                            onDismiss()
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                }
             }
         }
-    )
+    }
 }
 
+// Utility functions for date/time conversion
 @OptIn(ExperimentalTime::class)
 fun convertMillisToDate(millis: Long): String {
     val instant = Instant.fromEpochMilliseconds(millis)
