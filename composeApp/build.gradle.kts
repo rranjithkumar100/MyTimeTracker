@@ -22,7 +22,8 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
-            isStatic = true
+            isStatic = false // Changed to dynamic to handle system library linking automatically
+            linkerOpts("-lsqlite3")
         }
     }
     

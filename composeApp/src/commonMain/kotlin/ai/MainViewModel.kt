@@ -7,9 +7,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 class MainViewModel(private val repository: Repository) : ViewModel() {
 
@@ -85,14 +82,4 @@ class MainViewModel(private val repository: Repository) : ViewModel() {
         }
     }
 
-    fun getFormattedDate(): String {
-        val currentMoment = Clock.System.now()
-        val datetime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
-        // Simple formatting: YYYY-MM-DD. Or use a library if available.
-        // Since I don't have a formatter handy in KMP common without additional libs, I'll construct it.
-        // But wait, toLocalDateTime gives structure.
-        val month = datetime.monthNumber.toString().padStart(2, '0')
-        val day = datetime.dayOfMonth.toString().padStart(2, '0')
-        return "${datetime.year}-$month-$day"
-    }
 }
