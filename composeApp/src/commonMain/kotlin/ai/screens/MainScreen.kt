@@ -18,11 +18,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,44 +44,43 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
     val logs by viewModel.logs.collectAsState()
+    val weekendMode by viewModel.weekendMode.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showInputDialog by remember { mutableStateOf<InputType?>(null) }
+    var currentScreen by remember { mutableStateOf(Screen.Home) }
 
     Scaffold(
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Logs") },
+                    selected = currentScreen == Screen.Home,
+                    onClick = { currentScreen = Screen.Home }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                    label = { Text("Settings") },
+                    selected = currentScreen == Screen.Settings,
+                    onClick = { currentScreen = Screen.Settings }
+                )
+            }
+        },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showBottomSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Log")
+            if (currentScreen == Screen.Home) {
+                FloatingActionButton(onClick = { showBottomSheet = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Log")
+                }
             }
         }
     ) { paddingValues ->
-        if (logs.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No logs yet. Tap + to add your first entry!", style = MaterialTheme.typography.bodyLarge)
-            }
-        } else {
-            val groupedLogs = logs.groupBy { it.displayDate }
-
-            LazyColumn(
-                modifier = Modifier.padding(paddingValues).fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                groupedLogs.forEach { (date, logsForDate) ->
-                    stickyHeader {
-                        DateHeader(date)
-                    }
-                    items(logsForDate, key = { it.id.toString() + it.logType }) { log ->
-                        // Removed SwipeToDismiss due to version compatibility issues.
-                        // Added delete functionality in LogItem directly or we can add a long press menu later.
-                        // For now, LogItem will have a delete button.
-                        LogItem(
-                            log = log,
-                            onDelete = { viewModel.deleteLog(log) },
-                            onEdit = {
-                                // TODO: Implement Edit logic
-                            }
-                        )
-                    }
-                }
+        Box(modifier = Modifier.padding(paddingValues)) {
+            when (currentScreen) {
+                Screen.Home -> HomeScreen(logs = logs, onDeleteLog = viewModel::deleteLog)
+                Screen.Settings -> SettingsScreen(
+                    weekendMode = weekendMode,
+                    onWeekendModeChanged = viewModel::updateWeekendMode
+                )
             }
         }
 
@@ -116,6 +119,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     }
                 )
                 InputType.Score -> DailyScoreInputDialog(
+                    weekendMode = weekendMode,
                     onDismiss = { showInputDialog = null },
                     onSave = { office, personal, refl, date ->
                         viewModel.addDailyScore(office, personal, refl, date)
@@ -129,6 +133,38 @@ fun MainScreen(viewModel: MainViewModel) {
                         showInputDialog = null
                     }
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun HomeScreen(logs: List<LogEntry>, onDeleteLog: (LogEntry) -> Unit) {
+    if (logs.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No logs yet. Tap + to add your first entry!", style = MaterialTheme.typography.bodyLarge)
+        }
+    } else {
+        val groupedLogs = logs.groupBy { it.displayDate }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
+            groupedLogs.forEach { (date, logsForDate) ->
+                stickyHeader {
+                    DateHeader(date)
+                }
+                items(logsForDate, key = { it.id.toString() + it.logType }) { log ->
+                    LogItem(
+                        log = log,
+                        onDelete = { onDeleteLog(log) },
+                        onEdit = {
+                            // TODO: Implement Edit logic
+                        }
+                    )
+                }
             }
         }
     }
@@ -162,4 +198,8 @@ fun ListItem(text: String, onClick: () -> Unit) {
 
 enum class InputType {
     Sleep, Exercise, Score, Routine
+}
+
+enum class Screen {
+    Home, Settings
 }

@@ -2,6 +2,7 @@ package ai
 
 import ai.data.LogEntry
 import ai.data.Repository
+import ai.data.WeekendMode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +14,28 @@ class MainViewModel(private val repository: Repository) : ViewModel() {
     private val _logs = MutableStateFlow<List<LogEntry>>(emptyList())
     val logs: StateFlow<List<LogEntry>> = _logs
 
+    private val _weekendMode = MutableStateFlow(WeekendMode.SatSun)
+    val weekendMode: StateFlow<WeekendMode> = _weekendMode
+
     init {
         refreshLogs()
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            val modeId = repository.getSetting(WeekendMode.KEY)
+            if (modeId != null) {
+                _weekendMode.value = WeekendMode.fromId(modeId)
+            }
+        }
+    }
+
+    fun updateWeekendMode(mode: WeekendMode) {
+        viewModelScope.launch {
+            repository.saveSetting(WeekendMode.KEY, mode.id)
+            _weekendMode.value = mode
+        }
     }
 
     fun refreshLogs() {
