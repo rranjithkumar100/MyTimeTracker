@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -170,10 +171,21 @@ fun HomeScreen(logs: List<LogEntry>, onDeleteLog: (LogEntry) -> Unit) {
     }
 }
 
+fun formatDateHeader(dateString: String): String {
+    return try {
+        val date = LocalDate.parse(dateString) // Parses "2025-11-22"
+        val monthName = date.month.name.lowercase().replaceFirstChar { it.uppercase() }
+        val shortMonth = monthName.take(3) // First 3 letters
+        "${date.dayOfMonth.toString().padStart(2, '0')}-$shortMonth-${date.year}"
+    } catch (e: Exception) {
+        dateString // Return original if parsing fails
+    }
+}
+
 @Composable
 fun DateHeader(date: String) {
     Text(
-        text = date,
+        text = formatDateHeader(date),
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant)
