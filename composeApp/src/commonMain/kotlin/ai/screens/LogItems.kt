@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -35,7 +36,8 @@ fun LogItem(log: LogEntry, onDelete: () -> Unit, onEdit: () -> Unit) {
             .padding(vertical = 4.dp)
             .clickable { onEdit() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = getCardBackgroundColor(log))
     ) {
         Row(
             modifier = Modifier
@@ -105,12 +107,54 @@ fun LogContent(log: LogEntry) {
         }
         is LogEntry.DailyScore -> {
             Text(text = "Scores", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Office: ${log.officeWorkScore}/10, Personal: ${log.personalProjectScore}/10", style = MaterialTheme.typography.bodyMedium)
+            Row {
+                if (log.officeWorkScore > 0) {
+                    Text(text = "Office: ", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "${log.officeWorkScore}/10",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = getScoreColor(log.officeWorkScore)
+                    )
+                    Text(text = ", ", style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(text = "Personal: ", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "${log.personalProjectScore}/10",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = getScoreColor(log.personalProjectScore)
+                )
+            }
             if (!log.reflection.isNullOrBlank()) {
                 Text(text = log.reflection, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
+}
+
+fun getScoreColor(score: Long): Color {
+    return when {
+        score > 7 -> Color(0xFF2E7D32) // Darker Green
+        score >= 5 -> Color(0xFFF9A825) // Darker Yellow
+        else -> Color(0xFFC62828) // Darker Red
+    }
+}
+
+@Composable
+fun getCardBackgroundColor(log: LogEntry): Color {
+    if (log is LogEntry.DailyScore) {
+        val scoreToCheck = if (log.officeWorkScore > 0) {
+            (log.officeWorkScore + log.personalProjectScore) / 2.0
+        } else {
+            log.personalProjectScore.toDouble()
+        }
+
+        return when {
+            scoreToCheck > 7 -> Color(0xFFE8F5E9) // Light Green
+            scoreToCheck >= 5 -> Color(0xFFFFFDE7) // Light Yellow
+            else -> Color(0xFFFFEBEE) // Light Red
+        }
+    }
+    return MaterialTheme.colorScheme.surfaceVariant
 }
 
 fun formatDuration(millis: Long): String {
