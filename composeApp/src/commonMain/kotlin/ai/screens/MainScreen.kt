@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -28,9 +29,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,11 +50,26 @@ import kotlinx.datetime.LocalDate
 fun MainScreen(viewModel: MainViewModel) {
     val logs by viewModel.logs.collectAsState()
     val weekendMode by viewModel.weekendMode.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showInputDialog by remember { mutableStateOf<InputType?>(null) }
     var currentScreen by remember { mutableStateOf(Screen.Home) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(syncState) {
+        when (val state = syncState) {
+            is MainViewModel.SyncState.Success -> {
+                snackbarHostState.showSnackbar(state.message)
+            }
+            is MainViewModel.SyncState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
@@ -69,8 +88,21 @@ fun MainScreen(viewModel: MainViewModel) {
         },
         floatingActionButton = {
             if (currentScreen == Screen.Home) {
-                FloatingActionButton(onClick = { showBottomSheet = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Log")
+                Column(horizontalAlignment = Alignment.End) {
+                    FloatingActionButton(
+                        onClick = { viewModel.syncHealthCalories() },
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        if (syncState is MainViewModel.SyncState.Loading) {
+                            Text("...", modifier = Modifier.padding(horizontal = 8.dp))
+                        } else {
+                            Icon(Icons.Default.Sync, contentDescription = "Sync Health")
+                        }
+                    }
+                    FloatingActionButton(onClick = { showBottomSheet = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Log")
+                    }
                 }
             }
         }

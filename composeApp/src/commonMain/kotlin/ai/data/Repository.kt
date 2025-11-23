@@ -1,12 +1,28 @@
 package ai.data
 
 import com.myapplication.common.data.AppDatabase
+import com.myapplication.common.data.CalorieLog
 import com.myapplication.common.data.DailyScore
 import com.myapplication.common.data.ExerciseLog
 import com.myapplication.common.data.RoutineLog
 import com.myapplication.common.data.SleepLog
 
 class Repository(private val database: AppDatabase) {
+
+    fun insertOrUpdateCalorieLog(calories: Double, source: String, displayDate: String, fetchedAt: Long) {
+        database.appDatabaseQueries.insertOrUpdateCalorieLog(
+            calories = calories,
+            source = source,
+            display_date = displayDate,
+            fetchedAt = fetchedAt
+        )
+    }
+
+    fun getCalorieLogs(): List<CalorieLog> = database.appDatabaseQueries.getCalorieLogs().executeAsList()
+
+    fun getCalorieLogByDate(displayDate: String): CalorieLog? = database.appDatabaseQueries.getCalorieLogByDate(displayDate).executeAsOneOrNull()
+
+    fun getAllLoggedDates(): List<String> = database.appDatabaseQueries.getAllLoggedDates().executeAsList()
 
     fun insertRoutineLog(title: String, startTime: Long, duration: Long, notes: String?, displayDate: String) {
         database.appDatabaseQueries.insertRoutineLog(

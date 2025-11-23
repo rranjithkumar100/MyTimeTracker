@@ -87,3 +87,31 @@ INSERT OR REPLACE INTO Settings(key, value) VALUES (?, ?);
 
 getSetting:
 SELECT value FROM Settings WHERE key = ?;
+
+CREATE TABLE CalorieLog (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    calories REAL NOT NULL,
+    source TEXT NOT NULL,
+    display_date TEXT NOT NULL,
+    fetchedAt INTEGER NOT NULL,
+    UNIQUE(display_date, source)
+);
+
+-- CalorieLog queries
+insertOrUpdateCalorieLog:
+INSERT OR REPLACE INTO CalorieLog(calories, source, display_date, fetchedAt) VALUES (?, ?, ?, ?);
+
+getCalorieLogs:
+SELECT * FROM CalorieLog;
+
+getCalorieLogByDate:
+SELECT * FROM CalorieLog WHERE display_date = ?;
+
+getAllLoggedDates:
+SELECT display_date FROM RoutineLog
+UNION
+SELECT display_date FROM SleepLog
+UNION
+SELECT display_date FROM ExerciseLog
+UNION
+SELECT display_date FROM DailyScore;

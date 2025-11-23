@@ -3,13 +3,18 @@ package ai
 import ai.data.LogEntry
 import ai.data.Repository
 import ai.data.WeekendMode
+import ai.health.HealthService
+import ai.health.DailyCalories
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val repository: Repository) : ViewModel() {
+class MainViewModel(
+    private val repository: Repository,
+    private val healthService: HealthService
+) : ViewModel() {
 
     private val _logs = MutableStateFlow<List<LogEntry>>(emptyList())
     val logs: StateFlow<List<LogEntry>> = _logs
@@ -17,9 +22,62 @@ class MainViewModel(private val repository: Repository) : ViewModel() {
     private val _weekendMode = MutableStateFlow(WeekendMode.SatSun)
     val weekendMode: StateFlow<WeekendMode> = _weekendMode
 
+    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val syncState: StateFlow<SyncState> = _syncState
+
     init {
         refreshLogs()
         loadSettings()
+    }
+
+    sealed class SyncState {
+        object Idle : SyncState()
+        object Loading : SyncState()
+        data class Success(val message: String) : SyncState()
+        data class Error(val message: String) : SyncState()
+    }
+
+    fun syncHealthCalories() {
+        viewModelScope.launch {
+            _syncState.value = SyncState.Loading
+            try {
+                val dates = repository.getAllLoggedDates()
+                var successCount = 0
+                val errors = mutableListOf<String>()
+
+                dates.forEach { date ->
+                    val result = healthService.getCalories(date)
+                    result.fold(
+                        onSuccess = { dailyCalories ->
+                            repository.insertOrUpdateCalorieLog(
+                                calories = dailyCalories.caloriesKcal,
+                                source = dailyCalories.sourceId,
+                                displayDate = dailyCalories.date,
+                                fetchedAt = dailyCalories.fetchedAt
+                            )
+                            successCount++
+                        },
+                        onFailure = { error ->
+                            if (error.message == "Permissions not granted") {
+                                errors.add("Health permissions required.")
+                                return@forEach
+                            }
+                            errors.add("Failed for $date: ${error.message}")
+                        }
+                    )
+                }
+
+                if (errors.isNotEmpty() && successCount == 0) {
+                     _syncState.value = SyncState.Error(errors.firstOrNull() ?: "Unknown error")
+                } else {
+                     _syncState.value = SyncState.Success("Health calories synced.")
+                }
+            } catch (e: Exception) {
+                _syncState.value = SyncState.Error(e.message ?: "Unknown error")
+            } finally {
+                // Reset state after delay or keep it? Requirement says "On success show: Health calories synced."
+            }
+        }
     }
 
     private fun loadSettings() {
